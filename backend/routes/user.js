@@ -99,7 +99,64 @@ router.post('/signin',async(req, res) => {
     })
 })
 
-router.put('/user',authMiddleware,(req, res, next) =>{
-    
+const updateBody=z.object({
+    firstName:z.string().optional(),
+    lastName:z.string().optional(),
+    password:z.string().optional().min(4)
 })
+
+router.put('/',authMiddleware,async(req, res) =>{
+        
+    const { success }=updateBody.safeParse(req.body)
+  
+    if(!success){
+        res.status(411).json({
+            message:"error while updating information "
+        })
+    }
+
+ await User.updateOne( req.body,
+    {id:req.userId}
+    )
+    
+ res.json({
+    success:"Updated successfully"
+ })    
+})
+
+router.get('/bulk',async (res,req)=>{
+    var filter=req.query.filter || "";
+
+    if(!filter){
+        res.status(404).json({
+            message:"User not found"
+        })
+    }
+ 
+    const users=await User.find({
+        $or:[{
+            firstName:{
+                "$regex":filter
+            },
+        },
+            {
+            lastName:{
+                "$regex":filter
+            }
+        }
+        ]
+    })
+    res.status(200).json({
+        user:users.map(user=>(
+            {
+           firstName:user.firstName,
+           lastName:user.lastName,
+           _id:user._id
+            }
+        ))
+    })
+
+
+})
+
 module.exports = router
