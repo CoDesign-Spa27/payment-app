@@ -102,7 +102,7 @@ router.post('/signin',async(req, res) => {
 const updateBody=z.object({
     firstName:z.string().optional(),
     lastName:z.string().optional(),
-    password:z.string().optional().min(4)
+    password:z.string().optional()
 })
 
 router.put('/',authMiddleware,async(req, res) =>{
