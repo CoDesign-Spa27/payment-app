@@ -1,9 +1,9 @@
 const express = require('express');
  const  router=express.Router();
  const z=require('zod')
- const { User }=require('../db')
+ const { User,Account }=require('../db')
  const jwt=require('jsonwebtoken')
- const  JWT_SECRET=require('../config')
+ const { JWT_SECRET }=require('../config')
  const authMiddleware=require('../middleware')
  
 router.use(express.json())
@@ -31,11 +31,12 @@ const existingUser = await User.findOne(
         username: req.body.username
     }
 )
-if(existingUser._id){
+if(existingUser){
     return res.status(411).json({
         message:"User already exists"
     })
 }
+
 
 const newUser =await User.create( {
     username: req.body.username,
@@ -43,8 +44,17 @@ const newUser =await User.create( {
     lastName: req.body.lastName,
     password:req.body.password
 })
+
+const userId=newUser._id;
+
+ await Account.create({
+           userId,
+           balance:1 + Math.random() * 50000 
+   })
+
+
 const token=jwt.sign({
-    userId:newUser._id
+    userId
 },JWT_SECRET)
 
 res.json({
@@ -77,22 +87,17 @@ router.post('/signin',async(req, res) => {
     )
 
 
-    if(!existingUser){
-        res.status(411).json({
-            message:"User does not exists"
-        })
+    if(existingUser){
+        const token = jwt.sign({
+            userId:existingUser._id
+        },JWT_SECRET)
+    
+             res.status(200).json({
+                message:"successlly logged in ",
+                token:token
+             })
     }
-    else{
-        
-    const token = jwt.sign({
-        userId:existingUser._id
-    },JWT_SECRET)
-
-         res.status(200).json({
-            message:"successlly logged in ",
-            token:token
-         })
-    }
+  
 
     res.status(411).json({
         message:"Error occured while signing in"
