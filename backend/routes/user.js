@@ -38,14 +38,14 @@ if(existingUser){
 }
 
 
-const newUser =await User.create( {
+const user =await User.create( {
     username: req.body.username,
     firstName: req.body.firstName,
     lastName: req.body.lastName,
     password:req.body.password
 })
 
-const userId=newUser._id;
+const userId=user._id;
 
  await Account.create({
            userId,

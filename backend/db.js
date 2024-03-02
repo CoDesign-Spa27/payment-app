@@ -5,13 +5,13 @@ mongoose.connect('mongodb+srv://mytuf8289:bElGZXrUA0lyf6yb@cluster0.pf4cvit.mong
 
 const userSchema=new mongoose.Schema({
    username:{
-    type:String,
-    required:true,
-    unique:true,
-    trim:true,
-    minLength:4,
-    maxLength:20,
-    index: true
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true,
+    minLength: 3,
+    maxLength: 30
    },
    firstName:{
     type:String,
