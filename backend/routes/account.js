@@ -1,19 +1,32 @@
 const express=require('express');
+
 const router =express.Router();
-const { Account }=require('../db'); 
-const authMiddleware = require('../middleware');
+const  authMiddleware  = require('../middleware');
+const { Account } = require('../db');
 
-router.get('/balance' ,authMiddleware,async(req,res)=>{
-  
-    const account=await  Account.findOne({
-        userId:req.userId
-    })
 
-    res.json({
-        balance:account.balance
-    })
-})
- 
+router.get('/balance' ,authMiddleware, async (req, res) => {
+    try {
+        const account = await Account.findOne({ userId: req.userId });
+
+        if (!account) {
+            return res.status(404).json({
+                message: 'Account not found for the user',
+            });
+        }
+
+        res.json({
+            balance: account.balance,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: 'Internal Server Error',
+            error: error.message || 'Unexpected error occurred',
+        });
+    }
+});
+
 router.post('/transfer',authMiddleware,async(req,res)=>{
   
     const {amount,to}=req.body;
@@ -38,7 +51,7 @@ router.post('/transfer',authMiddleware,async(req,res)=>{
         })
     }
 
-    await Account.update({
+    await Account.updateOne({
        userId:req.userId 
     },
     {
@@ -48,7 +61,7 @@ router.post('/transfer',authMiddleware,async(req,res)=>{
     }
     )
 
-    await Account.update({
+    await Account.updateOne({
         userId:to
     },
     {

@@ -4,7 +4,7 @@ const express = require('express');
  const { User,Account }=require('../db')
  const jwt=require('jsonwebtoken')
  const { JWT_SECRET }=require('../config')
- const authMiddleware=require('../middleware')
+ const authMiddleware =require('../middleware')
  
 router.use(express.json())
  
@@ -77,6 +77,7 @@ router.post('/signin',async(req, res) => {
         res.status(411).json({
             message:"error while signing in"
         })
+     
     }
 
     const existingUser = await User.findOne(
@@ -92,15 +93,17 @@ router.post('/signin',async(req, res) => {
             userId:existingUser._id
         },JWT_SECRET)
     
-             res.status(200).json({
+        return  res.status(200).json({
                 message:"successlly logged in ",
                 token:token
              })
+
+          
     }
   
 
     res.status(411).json({
-        message:"Error occured while signing in"
+        message:"wrong Password or email"
     })
 })
 
@@ -110,33 +113,35 @@ const updateBody=z.object({
     password:z.string().optional()
 })
 
-router.put('/',authMiddleware,async(req, res) =>{
+router.put('/',authMiddleware, async(req, res) =>{
         
     const { success }=updateBody.safeParse(req.body)
   
     if(!success){
-        res.status(411).json({
+        return   res.status(411).json({
             message:"error while updating information "
         })
+       
     }
-
- await User.updateOne( req.body,
-    {id:req.userId}
+try {
+ await User.updateOne({_id:req.userId},
+    req.body 
     )
     
  res.json({
     success:"Updated successfully"
- })    
+ }) 
+} 
+catch (error){
+res.status(500).json({
+    message:"Interal Server Error"
+})
+}  
 })
 
-router.get('/bulk',async (res,req)=>{
-    var filter=req.query.filter || "";
-
-    if(!filter){
-        res.status(404).json({
-            message:"User not found"
-        })
-    }
+router.get('/bulk',async (req,res)=>{
+    const filter=req.query.filter || "";
+ 
  
     const users=await User.find({
         $or:[{
@@ -152,8 +157,9 @@ router.get('/bulk',async (res,req)=>{
         ]
     })
     res.status(200).json({
-        user:users.map(user=>(
+        users:users.map(user=>(
             {
+           username: user.username,
            firstName:user.firstName,
            lastName:user.lastName,
            _id:user._id

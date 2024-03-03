@@ -1,6 +1,6 @@
 const express=require('express')
 const jwt=require('jsonwebtoken')
-const JWT_SECRET=require('./config')
+const { JWT_SECRET }=require('./config')
  function authMiddleware(req, res, next) {
 
     const authHeader=req.header("Authorization");
@@ -9,27 +9,16 @@ const JWT_SECRET=require('./config')
         return res.status(401).json({
             message:"invalid authorization header"
         })
+        
     }
-    const token=authHeader.replace("Bearer ", "")
-    if(!token) {
-        return res.status(401).json({
-            message:"Authrization token not Found"
-        })
-    }
+    const token=authHeader.split(' ')[1];
 
   try{
-    const decoded=jwt.verify(token,JWT_SECRET)
+    const decoded=jwt.verify(token, JWT_SECRET)
 
-    if(decoded.userId){
     req.userId=decoded.userId
     next();
-    }
-    else{
-        return res.status(500).json({
-            message:"User Id not found"
-    
-        })
-    }
+
   }
   catch{(err)=>{
     return res.status(500).json({
@@ -42,4 +31,4 @@ const JWT_SECRET=require('./config')
 
 }
 
-module.exports= authMiddleware;
+module.exports=  authMiddleware 
