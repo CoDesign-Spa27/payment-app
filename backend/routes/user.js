@@ -4,7 +4,8 @@ const express = require('express');
  const { User,Account }=require('../db')
  const jwt=require('jsonwebtoken')
  const { JWT_SECRET }=require('../config')
- const authMiddleware =require('../middleware')
+ const authMiddleware =require('../middleware');
+const { jwtDecode } = require('jwt-decode');
  
 router.use(express.json())
  
@@ -74,10 +75,10 @@ router.post('/signin',async(req, res) => {
     const { success }=signInBody.safeParse(req.body)
 
     if(!success){
-        res.status(411).json({
+      return  res.status(411).json({
             message:"error while signing in"
         })
-     
+    
     }
 
     const existingUser = await User.findOne(
@@ -169,5 +170,35 @@ router.get('/bulk',async (req,res)=>{
 
 
 })
+
+router.get('/me',async (req,res)=>{
+    const token=req.headers.authorization
+
+    if(token){
+        try{
+            const stringToken=JSON.stringify(token)
+            const decodedToken=jwtDecode(stringToken)
+            const user=await User.findById(decodedToken.userId)
+           
+            if(user){
+                res.status(200).json({
+                    username:user.username,
+                    firstName:user.firstName
+                })
+
+
+            }
+            else{
+                res.status(404).json({ message: "User not found" });
+            }
+            
+        }catch(err){
+            console.log("Cannot get the user"+err)
+        }
+    }else{
+        res.status(401).json({ message: "User is not logged in" });
+    }
+})
+
 
 module.exports = router
